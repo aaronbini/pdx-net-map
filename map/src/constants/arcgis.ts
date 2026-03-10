@@ -16,7 +16,7 @@ export const ENDPOINTS = {
   neighborhoods:   layerUrl(13, '1=1', 'NAME,COMMPLAN,COALIT,MAPLABEL'),
   police:          layerUrl(27),
   netAreas:        `${NET_DIR}/query?f=geojson&where=1%3D1&outFields=*&outSR=4326`,
-  unsafeBuildings: layerUrl(4),
+  // unsafeBuildings: layerUrl(4),
   communityGardens:layerUrl(12),
   ceiTanks:        layerUrl(18),
 }
