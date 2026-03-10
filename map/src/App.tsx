@@ -7,6 +7,7 @@ import type { LayerId } from './types'
 export default function App() {
   const [visibleLayers, setVisibleLayers] = useState<Set<LayerId>>(DEFAULT_VISIBLE)
   const [channelFilter, setChannelFilter] = useState<number | null>(null)
+  const [districtFilter, setDistrictFilter] = useState<number | null>(null)
 
   const handleToggle = useCallback((id: LayerId) => {
     setVisibleLayers(prev => {
@@ -21,14 +22,20 @@ export default function App() {
     setChannelFilter(prev => prev === ch ? null : ch)
   }, [])
 
+  const handleDistrictFilter = useCallback((d: number | null) => {
+    setDistrictFilter(prev => prev === d ? null : d)
+  }, [])
+
   return (
     <div style={{ position: 'relative', flex: 1, minHeight: 0 }}>
-      <Map visibleLayers={visibleLayers} channelFilter={channelFilter} />
+      <Map visibleLayers={visibleLayers} channelFilter={channelFilter} districtFilter={districtFilter} />
       <LayerControl
         visibleLayers={visibleLayers}
         onToggle={handleToggle}
         channelFilter={channelFilter}
         onChannelFilter={handleChannelFilter}
+        districtFilter={districtFilter}
+        onDistrictFilter={handleDistrictFilter}
       />
     </div>
   )

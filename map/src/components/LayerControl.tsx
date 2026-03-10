@@ -34,6 +34,8 @@ interface Props {
   onToggle: (id: LayerId) => void
   channelFilter: number | null
   onChannelFilter: (ch: number | null) => void
+  districtFilter: number | null
+  onDistrictFilter: (d: number | null) => void
 }
 
 function useLoadingStates(): Record<LayerId, boolean> {
@@ -72,7 +74,7 @@ function useErrorStates(): Record<LayerId, boolean> {
   }
 }
 
-export function LayerControl({ visibleLayers, onToggle, channelFilter, onChannelFilter }: Props) {
+export function LayerControl({ visibleLayers, onToggle, channelFilter, onChannelFilter, districtFilter, onDistrictFilter }: Props) {
   const loading = useLoadingStates()
   const errors = useErrorStates()
 
@@ -185,6 +187,50 @@ export function LayerControl({ visibleLayers, onToggle, channelFilter, onChannel
                             {label}
                           </div>
                         ))}
+
+                        {/* District filter */}
+                        <div style={{ marginTop: 8 }}>
+                          <div style={{ fontSize: 10, fontWeight: 600, color: '#94a3b8', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                            Filter by district
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                            {[1, 2, 3, 4].map(d => {
+                              const active = districtFilter === d
+                              return (
+                                <button
+                                  key={d}
+                                  onClick={() => onDistrictFilter(d)}
+                                  style={{
+                                    padding: '2px 8px',
+                                    fontSize: 11,
+                                    fontWeight: active ? 700 : 400,
+                                    borderRadius: 4,
+                                    border: `1px solid ${active ? '#3b82f6' : '#e2e8f0'}`,
+                                    background: active ? '#3b82f6' : '#f8fafc',
+                                    color: active ? '#fff' : '#475569',
+                                    cursor: 'pointer',
+                                    lineHeight: 1.6,
+                                  }}
+                                >
+                                  {d}
+                                </button>
+                              )
+                            })}
+                            {districtFilter !== null && (
+                              <button
+                                onClick={() => onDistrictFilter(null)}
+                                style={{
+                                  padding: '2px 6px', fontSize: 11,
+                                  borderRadius: 4, border: '1px solid #e2e8f0',
+                                  background: '#f8fafc', color: '#94a3b8',
+                                  cursor: 'pointer', lineHeight: 1.6,
+                                }}
+                              >
+                                ✕ clear
+                              </button>
+                            )}
+                          </div>
+                        </div>
 
                         {/* Channel filter */}
                         <div style={{ marginTop: 8 }}>

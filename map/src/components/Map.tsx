@@ -17,6 +17,7 @@ mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
 interface Props {
   visibleLayers: Set<LayerId>
   channelFilter: number | null
+  districtFilter: number | null
 }
 
 // ---------------------------------------------------------------------------
@@ -39,6 +40,7 @@ function netPopup(p: Record<string, unknown>) {
     <span style="font-size:11px;color:#64748b">${statusLabel}</span>
     ${p.Neighborhoods_Included ? `<div style="margin-top:4px;font-size:11px;color:#475569">${p.Neighborhoods_Included}</div>` : ''}
     <table style="margin-top:6px;font-size:12px;border-collapse:collapse">
+      ${p.Council_District ? `<tr><td style="color:#64748b;padding-right:8px;padding-bottom:2px">District</td><td>${p.Council_District}</td></tr>` : ''}
       ${p.COALIT ? `<tr><td style="color:#64748b;padding-right:8px;padding-bottom:2px">Coalition</td><td>${p.COALIT}</td></tr>` : ''}
       ${p.Channel_Primary ? `<tr><td style="color:#64748b;padding-right:8px;padding-bottom:2px">Primary Ch.</td><td>${p.Channel_Primary}</td></tr>` : ''}
       ${p.Channel_Secondary ? `<tr><td style="color:#64748b;padding-right:8px;padding-bottom:2px">Secondary Ch.</td><td>${p.Channel_Secondary}</td></tr>` : ''}
@@ -152,7 +154,7 @@ type SourceSpec = { id: string; data: GeoJSON.FeatureCollection }
 // Map component
 // ---------------------------------------------------------------------------
 
-export function Map({ visibleLayers, channelFilter }: Props) {
+export function Map({ visibleLayers, channelFilter, districtFilter }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const popupRef = useRef<mapboxgl.Popup | null>(null)
@@ -448,17 +450,21 @@ export function Map({ visibleLayers, channelFilter }: Props) {
     ceiTanks.data, /*unsafeBuildings.data,*/ communityGardens.data,
   ])
 
-  // Sync channel filter on NET area layers
+  // Sync channel + district filters on NET area layers
   useEffect(() => {
     const map = mapRef.current
     if (!map || !mapLoaded) return
-    const filter = channelFilter !== null
-      ? ['==', ['get', 'Channel_Primary'], channelFilter] as mapboxgl.Expression
-      : null
+    const clauses = []
+    if (channelFilter !== null) clauses.push(['==', ['get', 'Channel_Primary'], channelFilter])
+    if (districtFilter !== null) clauses.push(['==', ['get', 'Council_District'], districtFilter])
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const filter: any = clauses.length === 0 ? null
+      : clauses.length === 1 ? clauses[0]
+      : ['all', ...clauses]
     for (const id of ['net-areas-fill', 'net-areas-line', 'net-areas-label']) {
       if (map.getLayer(id)) map.setFilter(id, filter)
     }
-  }, [channelFilter, mapLoaded])
+  }, [channelFilter, districtFilter, mapLoaded])
 
   // Sync layer visibility
   useEffect(() => {
