@@ -3,12 +3,33 @@ import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import type { LayerId } from '../types'
 import { getLayerConfig } from '../constants/layers'
+import { loadMapIcons } from '../utils/mapIcons'
 import {
   useNetAreas, useBeecn, useFireStations, useHospitals,
   useGroceryStores, useSchools, useCommunityCenters,
   usePolice, useNeighborhoods, useHazardousSites,
   useCeiTanks, useUnsafeBuildings, useCommunityGardens,
 } from '../hooks/useArcGIS'
+import beecnSvg     from '@mapbox/maki/icons/star.svg?raw'
+import fireSvg      from '@mapbox/maki/icons/fire-station.svg?raw'
+import hospitalSvg  from '@mapbox/maki/icons/hospital.svg?raw'
+import grocerySvg   from '@mapbox/maki/icons/grocery.svg?raw'
+import schoolSvg    from '@mapbox/maki/icons/school.svg?raw'
+import communitySvg from '@mapbox/maki/icons/town-hall.svg?raw'
+import policeSvg    from '@mapbox/maki/icons/police.svg?raw'
+import dangerSvg    from '@mapbox/maki/icons/danger.svg?raw'
+
+// SVG strings only — colors are paired with LayerId at load time
+const ICON_SVGS = {
+  beecn:           beecnSvg,
+  fireStations:    fireSvg,
+  hospitals:       hospitalSvg,
+  groceryStores:   grocerySvg,
+  schools:         schoolSvg,
+  communityCenters: communitySvg,
+  police:          policeSvg,
+  hazardousSites:  dangerSvg,
+} satisfies Partial<Record<LayerId, string>>
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
 
@@ -189,7 +210,16 @@ export function Map({ visibleLayers, channelFilter }: Props) {
     map.addControl(new mapboxgl.NavigationControl(), 'bottom-right')
     map.addControl(new mapboxgl.ScaleControl(), 'bottom-left')
 
-    map.on('load', () => setMapLoaded(true))
+    map.on('load', async () => {
+      const iconDefs = Object.fromEntries(
+        (Object.entries(ICON_SVGS) as [LayerId, string][]).map(([layerKey, svg]) => [
+          `pdx-${layerKey}`,
+          { svg, color: getLayerConfig(layerKey).color },
+        ])
+      )
+      await loadMapIcons(map, iconDefs)
+      setMapLoaded(true)
+    })
     mapRef.current = map
 
     return () => {
@@ -354,7 +384,7 @@ export function Map({ visibleLayers, channelFilter }: Props) {
         paint: { 'line-color': '#991b1b', 'line-width': 1.5 } })
     }
 
-    // Point layers
+    // Point layers — pre-colored Maki icons (color + white stroke baked into image)
     const pointLayers: Array<{ sourceId: string; layerId: string; layerKey: LayerId }> = [
       { sourceId: 'beecn',             layerId: 'beecn-points',     layerKey: 'beecn' },
       { sourceId: 'fire-stations',     layerId: 'fire-points',      layerKey: 'fireStations' },
@@ -368,17 +398,15 @@ export function Map({ visibleLayers, channelFilter }: Props) {
 
     for (const { sourceId, layerId, layerKey } of pointLayers) {
       if (map.getSource(sourceId) && !map.getLayer(layerId)) {
-        const color = getLayerConfig(layerKey).color
         map.addLayer({
           id: layerId,
-          type: 'circle',
+          type: 'symbol',
           source: sourceId,
-          layout: { visibility: visibleLayersRef.current.has(layerKey) ? 'visible' : 'none' },
-          paint: {
-            'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 5, 15, 10],
-            'circle-color': color,
-            'circle-stroke-color': '#fff',
-            'circle-stroke-width': 1.5,
+          layout: {
+            visibility: visibleLayersRef.current.has(layerKey) ? 'visible' : 'none',
+            'icon-image': `pdx-${layerKey}`,
+            'icon-size': 1.0,
+            'icon-allow-overlap': false,
           },
         })
       }
@@ -400,7 +428,7 @@ export function Map({ visibleLayers, channelFilter }: Props) {
           popupRef.current?.remove()
           popupRef.current = new mapboxgl.Popup({ maxWidth: '280px' })
             .setLngLat(coords)
-            .setHTML(buildPopup(feature.layer.id, props))
+            .setHTML(buildPopup(feature.layer?.id ?? '', props))
             .addTo(map)
           return
         }
