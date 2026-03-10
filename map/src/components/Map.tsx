@@ -4,32 +4,13 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import type { LayerId } from '../types'
 import { getLayerConfig } from '../constants/layers'
 import { loadMapIcons } from '../utils/mapIcons'
+import { LAYER_ICONS } from '../constants/icons'
 import {
   useNetAreas, useBeecn, useFireStations, useHospitals,
   useGroceryStores, useSchools, useCommunityCenters,
   usePolice, useNeighborhoods, useHazardousSites,
-  useCeiTanks, useUnsafeBuildings, useCommunityGardens,
+  useCeiTanks, /*useUnsafeBuildings,*/ useCommunityGardens,
 } from '../hooks/useArcGIS'
-import beecnSvg     from '@mapbox/maki/icons/star.svg?raw'
-import fireSvg      from '@mapbox/maki/icons/fire-station.svg?raw'
-import hospitalSvg  from '@mapbox/maki/icons/hospital.svg?raw'
-import grocerySvg   from '@mapbox/maki/icons/grocery.svg?raw'
-import schoolSvg    from '@mapbox/maki/icons/school.svg?raw'
-import communitySvg from '@mapbox/maki/icons/town-hall.svg?raw'
-import policeSvg    from '@mapbox/maki/icons/police.svg?raw'
-import dangerSvg    from '@mapbox/maki/icons/danger.svg?raw'
-
-// SVG strings only — colors are paired with LayerId at load time
-const ICON_SVGS = {
-  beecn:           beecnSvg,
-  fireStations:    fireSvg,
-  hospitals:       hospitalSvg,
-  groceryStores:   grocerySvg,
-  schools:         schoolSvg,
-  communityCenters: communitySvg,
-  police:          policeSvg,
-  hazardousSites:  dangerSvg,
-} satisfies Partial<Record<LayerId, string>>
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
 
@@ -192,7 +173,7 @@ export function Map({ visibleLayers, channelFilter }: Props) {
   const neighborhoods    = useNeighborhoods()
   const hazardousSites   = useHazardousSites()
   const ceiTanks         = useCeiTanks()
-  const unsafeBuildings  = useUnsafeBuildings()
+  // const unsafeBuildings  = useUnsafeBuildings()
   const communityGardens = useCommunityGardens()
 
   // Initialize map once
@@ -212,7 +193,7 @@ export function Map({ visibleLayers, channelFilter }: Props) {
 
     map.on('load', async () => {
       const iconDefs = Object.fromEntries(
-        (Object.entries(ICON_SVGS) as [LayerId, string][]).map(([layerKey, svg]) => [
+        (Object.entries(LAYER_ICONS) as [LayerId, string][]).map(([layerKey, svg]) => [
           `pdx-${layerKey}`,
           { svg, color: getLayerConfig(layerKey).color },
         ])
@@ -246,7 +227,7 @@ export function Map({ visibleLayers, channelFilter }: Props) {
       { id: 'neighborhoods',      data: neighborhoods.data! },
       { id: 'hazardous-sites',    data: hazardousSites.data! },
       { id: 'cei-tanks',          data: ceiTanks.data! },
-      { id: 'unsafe-buildings',   data: unsafeBuildings.data! },
+      // { id: 'unsafe-buildings',   data: unsafeBuildings.data! },
       { id: 'community-gardens',  data: communityGardens.data! },
     ].filter(s => s.data != null)
 
@@ -374,15 +355,15 @@ export function Map({ visibleLayers, channelFilter }: Props) {
         paint: { 'line-color': '#16a34a', 'line-width': 1.5 } })
     }
 
-    if (unsafeBuildings.data && !map.getLayer('unsafe-fill')) {
-      const vis = visibleLayersRef.current.has('unsafeBuildings') ? 'visible' : 'none'
-      map.addLayer({ id: 'unsafe-fill', type: 'fill', source: 'unsafe-buildings',
-        layout: { visibility: vis },
-        paint: { 'fill-color': '#b91c1c', 'fill-opacity': 0.45 } })
-      map.addLayer({ id: 'unsafe-line', type: 'line', source: 'unsafe-buildings',
-        layout: { visibility: vis },
-        paint: { 'line-color': '#991b1b', 'line-width': 1.5 } })
-    }
+    // if (unsafeBuildings.data && !map.getLayer('unsafe-fill')) {
+    //   const vis = visibleLayersRef.current.has('unsafeBuildings') ? 'visible' : 'none'
+    //   map.addLayer({ id: 'unsafe-fill', type: 'fill', source: 'unsafe-buildings',
+    //     layout: { visibility: vis },
+    //     paint: { 'fill-color': '#b91c1c', 'fill-opacity': 0.45 } })
+    //   map.addLayer({ id: 'unsafe-line', type: 'line', source: 'unsafe-buildings',
+    //     layout: { visibility: vis },
+    //     paint: { 'line-color': '#991b1b', 'line-width': 1.5 } })
+    // }
 
     // Point layers — pre-colored Maki icons (color + white stroke baked into image)
     const pointLayers: Array<{ sourceId: string; layerId: string; layerKey: LayerId }> = [
@@ -464,7 +445,7 @@ export function Map({ visibleLayers, channelFilter }: Props) {
     netAreas.data, beecn.data, fireStations.data, hospitals.data,
     groceryStores.data, schools.data, communityCenters.data,
     police.data, neighborhoods.data, hazardousSites.data,
-    ceiTanks.data, unsafeBuildings.data, communityGardens.data,
+    ceiTanks.data, /*unsafeBuildings.data,*/ communityGardens.data,
   ])
 
   // Sync channel filter on NET area layers
@@ -496,7 +477,7 @@ export function Map({ visibleLayers, channelFilter }: Props) {
       neighborhoods:    ['neighborhoods-line', 'neighborhoods-label'],
       hazardousSites:   ['hazardous-points'],
       ceiTanks:         ['cei-tanks-fill', 'cei-tanks-line'],
-      unsafeBuildings:  ['unsafe-fill', 'unsafe-line'],
+      // unsafeBuildings:  ['unsafe-fill', 'unsafe-line'],
       communityGardens: ['gardens-fill', 'gardens-line'],
     }
 

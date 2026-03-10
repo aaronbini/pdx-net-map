@@ -25,5 +25,5 @@ export function usePolice()           { return useLayer('police',            END
 export function useNeighborhoods()    { return useLayer('neighborhoods',     ENDPOINTS.neighborhoods) }
 export function useHazardousSites()   { return useLayer('hazardousSites',   ENDPOINTS.hazardousSites) }
 export function useCeiTanks()         { return useLayer('ceiTanks',         ENDPOINTS.ceiTanks) }
-export function useUnsafeBuildings()  { return useLayer('unsafeBuildings',  ENDPOINTS.unsafeBuildings) }
+// export function useUnsafeBuildings()  { return useLayer('unsafeBuildings',  ENDPOINTS.unsafeBuildings) }
 export function useCommunityGardens() { return useLayer('communityGardens', ENDPOINTS.communityGardens) }

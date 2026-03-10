@@ -1,10 +1,22 @@
 import type { LayerId } from '../types'
 import { LAYER_CONFIGS, LAYER_GROUPS } from '../constants/layers'
+import { LAYER_ICONS } from '../constants/icons'
+
+function makeSvgUrl(svg: string, color: string, size: number): string {
+  const colored = svg
+    .replace(/\s+width="[^"]*"/, '')
+    .replace(/\s+height="[^"]*"/, '')
+    .replace(
+      /<svg/,
+      `<svg width="${size}" height="${size}" fill="${color}" stroke="white" stroke-width="2" stroke-linejoin="round" paint-order="stroke fill"`
+    )
+  return `data:image/svg+xml,${encodeURIComponent(colored)}`
+}
 import {
   useNetAreas, useBeecn, useFireStations, useHospitals,
   useGroceryStores, useSchools, useCommunityCenters,
   usePolice, useNeighborhoods, useHazardousSites,
-  useCeiTanks, useUnsafeBuildings, useCommunityGardens,
+  useCeiTanks, /*useUnsafeBuildings,*/ useCommunityGardens,
 } from '../hooks/useArcGIS'
 
 const LOGO_URL = 'https://www.arcgis.com/sharing/rest/content/items/b60507fbce994d49b441452afec724b9/resources/images/widget_4/1649960068941.png'
@@ -37,7 +49,7 @@ function useLoadingStates(): Record<LayerId, boolean> {
     neighborhoods:    useNeighborhoods().isLoading,
     hazardousSites:   useHazardousSites().isLoading,
     ceiTanks:         useCeiTanks().isLoading,
-    unsafeBuildings:  useUnsafeBuildings().isLoading,
+    // unsafeBuildings:  useUnsafeBuildings().isLoading,
     communityGardens: useCommunityGardens().isLoading,
   }
 }
@@ -55,7 +67,7 @@ function useErrorStates(): Record<LayerId, boolean> {
     neighborhoods:    !!useNeighborhoods().error,
     hazardousSites:   !!useHazardousSites().error,
     ceiTanks:         !!useCeiTanks().error,
-    unsafeBuildings:  !!useUnsafeBuildings().error,
+    // unsafeBuildings:  !!useUnsafeBuildings().error,
     communityGardens: !!useCommunityGardens().error,
   }
 }
@@ -94,6 +106,11 @@ export function LayerControl({ visibleLayers, onToggle, channelFilter, onChannel
         </div>
       </div>
 
+      {/* Layer toggles hint */}
+      <div style={{ padding: '7px 16px 0', fontSize: 10, color: '#94a3b8', fontStyle: 'italic' }}>
+        Click a layer to show or hide it
+      </div>
+
       {/* Layer toggles */}
       <div style={{ padding: '10px 16px' }}>
         {LAYER_GROUPS.map(group => {
@@ -122,14 +139,35 @@ export function LayerControl({ visibleLayers, onToggle, channelFilter, onChannel
                       userSelect: 'none',
                     }}>
                       <input type="checkbox" checked={isVisible} onChange={() => onToggle(layer.id)} style={{ display: 'none' }} />
-                      <span style={{
-                        width: 12, height: 12, flexShrink: 0,
-                        borderRadius: layer.id === 'neighborhoods' || isNet ? 2 : '50%',
-                        background: isVisible ? layer.color : '#e2e8f0',
-                        border: layer.id === 'neighborhoods' ? `2px dashed ${isVisible ? layer.color : '#e2e8f0'}` : 'none',
-                        boxSizing: 'border-box',
-                      }} />
-                      <span style={{ flex: 1 }}>{layer.label}</span>
+                      {LAYER_ICONS[layer.id] ? (
+                        <img
+                          src={makeSvgUrl(LAYER_ICONS[layer.id]!, isVisible ? layer.color : '#cbd5e1', 14)}
+                          width={14} height={14}
+                          style={{ flexShrink: 0, display: 'block' }}
+                          alt=""
+                        />
+                      ) : (
+                        <span style={{
+                          width: 12, height: 12, flexShrink: 0,
+                          borderRadius: layer.id === 'neighborhoods' || isNet ? 2 : '50%',
+                          background: isVisible ? layer.color : '#e2e8f0',
+                          border: layer.id === 'neighborhoods' ? `2px dashed ${isVisible ? layer.color : '#e2e8f0'}` : 'none',
+                          boxSizing: 'border-box',
+                        }} />
+                      )}
+                      <span style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        {layer.label}
+                        {layer.id === 'beecn' && (
+                          <a
+                            href="https://www.portland.gov/pbem/about-beecn"
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            title="What is a BEECN?"
+                            style={{ fontSize: 11, color: '#0f172a', lineHeight: 1, textDecoration: 'none' }}
+                          >ⓘ</a>
+                        )}
+                      </span>
                       {isLoading && <span style={{ fontSize: 10, color: '#94a3b8' }}>…</span>}
                       {hasError && <span style={{ fontSize: 10, color: '#ef4444' }} title="Failed to load">✕</span>}
                     </label>
