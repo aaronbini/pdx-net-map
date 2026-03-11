@@ -16,7 +16,7 @@ import {
   useNetAreas, useBeecn, useFireStations, useHospitals,
   useGroceryStores, useSchools, useCommunityCenters,
   usePolice, useNeighborhoods, useHazardousSites,
-  useCeiTanks, /*useUnsafeBuildings,*/ useCommunityGardens,
+  useCeiTanks, /*useUnsafeBuildings,*/ useCommunityGardens, useRadioSectors,
 } from '../hooks/useArcGIS'
 
 const LOGO_URL = 'https://www.arcgis.com/sharing/rest/content/items/b60507fbce994d49b441452afec724b9/resources/images/widget_4/1649960068941.png'
@@ -53,6 +53,7 @@ function useLoadingStates(): Record<LayerId, boolean> {
     ceiTanks:         useCeiTanks().isLoading,
     // unsafeBuildings:  useUnsafeBuildings().isLoading,
     communityGardens: useCommunityGardens().isLoading,
+    radioSectors:     useRadioSectors().isLoading,
   }
 }
 
@@ -71,6 +72,7 @@ function useErrorStates(): Record<LayerId, boolean> {
     ceiTanks:         !!useCeiTanks().error,
     // unsafeBuildings:  !!useUnsafeBuildings().error,
     communityGardens: !!useCommunityGardens().error,
+    radioSectors:     !!useRadioSectors().error,
   }
 }
 

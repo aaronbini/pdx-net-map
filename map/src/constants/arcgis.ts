@@ -1,5 +1,6 @@
 const BASE = 'https://services.arcgis.com/quVN97tn06YNGj9s/arcgis/rest/services/NETs_Community_Resiliency_WFL1/FeatureServer'
 const NET_DIR = 'https://services8.arcgis.com/PeY4XZhsIFEEKEcb/arcgis/rest/services/NET_Directory/FeatureServer/0'
+const RADIO_SECTORS = 'https://services8.arcgis.com/PeY4XZhsIFEEKEcb/arcgis/rest/services/Portland_NET_Radio_Training_Liaison_Sectors/FeatureServer/0'
 
 function layerUrl(id: number, where = '1=1', outFields = '*') {
   return `${BASE}/${id}/query?f=geojson&where=${encodeURIComponent(where)}&outFields=${outFields}&outSR=4326`
@@ -19,4 +20,5 @@ export const ENDPOINTS = {
   // unsafeBuildings: layerUrl(4),
   communityGardens:layerUrl(12),
   ceiTanks:        layerUrl(18),
+  radioSectors:    `${RADIO_SECTORS}/query?f=geojson&where=1%3D1&outFields=Radio_Training_Sector,Radio_Training_Lisison,Radio_Training_Liaison_Email,Radio_Training_Liaison_CallSign&outSR=4326`,
 }

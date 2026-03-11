@@ -12,6 +12,7 @@ export type LayerId =
   | 'ceiTanks'
   // | 'unsafeBuildings'  // dataset appears defunct
   | 'communityGardens'
+  | 'radioSectors'
 
 export interface LayerConfig {
   id: LayerId

@@ -27,3 +27,4 @@ export function useHazardousSites()   { return useLayer('hazardousSites',   ENDP
 export function useCeiTanks()         { return useLayer('ceiTanks',         ENDPOINTS.ceiTanks) }
 // export function useUnsafeBuildings()  { return useLayer('unsafeBuildings',  ENDPOINTS.unsafeBuildings) }
 export function useCommunityGardens() { return useLayer('communityGardens', ENDPOINTS.communityGardens) }
+export function useRadioSectors()     { return useLayer('radioSectors',     ENDPOINTS.radioSectors) }
