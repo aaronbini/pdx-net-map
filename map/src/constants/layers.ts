@@ -14,6 +14,7 @@ export const LAYER_CONFIGS: LayerConfig[] = [
   { id: 'ceiTanks',        label: 'CEI Hub Tanks',       color: '#c2410c', group: 'Hazards', description: 'Industrial petroleum & chemical storage tanks' },
   // { id: 'unsafeBuildings', label: 'Unsafe Buildings',    color: '#92400e', group: 'Hazards', description: 'Portland Fire Bureau-tagged unsafe structures' },
   { id: 'communityGardens',label: 'Community Gardens',   color: '#22c55e', group: 'Community', description: 'Active community gardens — potential staging areas' },
+  { id: 'radioSectors',    label: 'Radio Training Sectors', color: '#0d9488', group: 'NET', description: 'Radio Training Liaison sector boundaries' },
 ]
 
 export const LAYER_GROUPS = ['NET', 'Emergency', 'Community', 'Geography', 'Hazards']

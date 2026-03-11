@@ -9,7 +9,7 @@ import {
   useNetAreas, useBeecn, useFireStations, useHospitals,
   useGroceryStores, useSchools, useCommunityCenters,
   usePolice, useNeighborhoods, useHazardousSites,
-  useCeiTanks, /*useUnsafeBuildings,*/ useCommunityGardens,
+  useCeiTanks, /*useUnsafeBuildings,*/ useCommunityGardens, useRadioSectors,
 } from '../hooks/useArcGIS'
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
@@ -139,6 +139,14 @@ function buildPopup(layerId: string, props: Record<string, unknown>): string {
         ['Hazard Class', props.First_Hazard_Class_Description],
         ['Business Type', props.Business_Type],
       ])
+    case 'radio-sectors-fill':
+      return genericPopup(`Radio Sector: ${props.Radio_Training_Sector ?? ''}`, [
+        ['Liaison', props.Radio_Training_Lisison],
+        ['Call Sign', props.Radio_Training_Liaison_CallSign],
+        ['Email', props.Radio_Training_Liaison_Email
+          ? `<a href="mailto:${props.Radio_Training_Liaison_Email}" style="color:#3b82f6">${props.Radio_Training_Liaison_Email}</a>`
+          : null],
+      ])
     default:
       return String(props.NAME ?? props.name ?? '')
   }
@@ -177,6 +185,7 @@ export function Map({ visibleLayers, channelFilter, districtFilter }: Props) {
   const ceiTanks         = useCeiTanks()
   // const unsafeBuildings  = useUnsafeBuildings()
   const communityGardens = useCommunityGardens()
+  const radioSectors     = useRadioSectors()
 
   // Initialize map once
   useEffect(() => {
@@ -231,6 +240,7 @@ export function Map({ visibleLayers, channelFilter, districtFilter }: Props) {
       { id: 'cei-tanks',          data: ceiTanks.data! },
       // { id: 'unsafe-buildings',   data: unsafeBuildings.data! },
       { id: 'community-gardens',  data: communityGardens.data! },
+      { id: 'radio-sectors',      data: radioSectors.data! },
     ].filter(s => s.data != null)
 
     for (const { id, data } of sources) {
@@ -245,7 +255,8 @@ export function Map({ visibleLayers, channelFilter, districtFilter }: Props) {
     // Polygon layers (add before points so they render underneath)
     if (netAreas.data && !map.getLayer('net-areas-fill')) {
       // NET area color: blue (active Portland), gray (inactive Portland), purple (outside Portland)
-      const netColor: mapboxgl.Expression = [
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const netColor: any = [
         'case',
         ['!=', ['get', 'Jurisdiction'], 'Portland'], '#a78bfa',
         ['==', ['get', 'Inactive'], 'Inactive'],      '#94a3b8',
@@ -357,6 +368,30 @@ export function Map({ visibleLayers, channelFilter, districtFilter }: Props) {
         paint: { 'line-color': '#16a34a', 'line-width': 1.5 } })
     }
 
+    if (radioSectors.data && !map.getLayer('radio-sectors-fill')) {
+      const vis = visibleLayersRef.current.has('radioSectors') ? 'visible' : 'none'
+      map.addLayer({ id: 'radio-sectors-fill', type: 'fill', source: 'radio-sectors',
+        layout: { visibility: vis },
+        paint: { 'fill-color': '#0d9488', 'fill-opacity': 0.12 } })
+      map.addLayer({ id: 'radio-sectors-line', type: 'line', source: 'radio-sectors',
+        layout: { visibility: vis },
+        paint: { 'line-color': '#0f766e', 'line-width': 1.5, 'line-dasharray': [4, 2] } })
+      map.addLayer({ id: 'radio-sectors-label', type: 'symbol', source: 'radio-sectors',
+        layout: {
+          visibility: vis,
+          'text-field': ['get', 'Radio_Training_Sector'],
+          'text-size': 11,
+          'text-anchor': 'center',
+        },
+        paint: {
+          'text-color': '#134e4a',
+          'text-halo-color': '#fff',
+          'text-halo-width': 1.5,
+        },
+        minzoom: 10,
+      })
+    }
+
     // if (unsafeBuildings.data && !map.getLayer('unsafe-fill')) {
     //   const vis = visibleLayersRef.current.has('unsafeBuildings') ? 'visible' : 'none'
     //   map.addLayer({ id: 'unsafe-fill', type: 'fill', source: 'unsafe-buildings',
@@ -417,7 +452,7 @@ export function Map({ visibleLayers, channelFilter, districtFilter }: Props) {
         }
 
         // Fall back to polygon layers in priority order (smaller/more specific first)
-        const polygonLayers = ['unsafe-fill', 'cei-tanks-fill', 'gardens-fill', 'net-areas-fill']
+        const polygonLayers = ['unsafe-fill', 'cei-tanks-fill', 'gardens-fill', 'radio-sectors-fill', 'net-areas-fill']
           .filter(id => map.getLayer(id))
         for (const layerId of polygonLayers) {
           const features = map.queryRenderedFeatures(e.point, { layers: [layerId] })
@@ -434,7 +469,7 @@ export function Map({ visibleLayers, channelFilter, districtFilter }: Props) {
       })
 
       // Cursor: pointer when hovering any interactive layer
-      const allInteractiveLayers = [...pointLayerIds, 'unsafe-fill', 'cei-tanks-fill', 'gardens-fill', 'net-areas-fill']
+      const allInteractiveLayers = [...pointLayerIds, 'unsafe-fill', 'cei-tanks-fill', 'gardens-fill', 'radio-sectors-fill', 'net-areas-fill']
       map.on('mousemove', (e) => {
         const features = map.queryRenderedFeatures(e.point, {
           layers: allInteractiveLayers.filter(id => map.getLayer(id)),
@@ -447,7 +482,7 @@ export function Map({ visibleLayers, channelFilter, districtFilter }: Props) {
     netAreas.data, beecn.data, fireStations.data, hospitals.data,
     groceryStores.data, schools.data, communityCenters.data,
     police.data, neighborhoods.data, hazardousSites.data,
-    ceiTanks.data, /*unsafeBuildings.data,*/ communityGardens.data,
+    ceiTanks.data, /*unsafeBuildings.data,*/ communityGardens.data, radioSectors.data,
   ])
 
   // Sync channel + district filters on NET area layers
@@ -485,6 +520,7 @@ export function Map({ visibleLayers, channelFilter, districtFilter }: Props) {
       ceiTanks:         ['cei-tanks-fill', 'cei-tanks-line'],
       // unsafeBuildings:  ['unsafe-fill', 'unsafe-line'],
       communityGardens: ['gardens-fill', 'gardens-line'],
+      radioSectors:     ['radio-sectors-fill', 'radio-sectors-line', 'radio-sectors-label'],
     }
 
     for (const [key, mapboxIds] of Object.entries(layerMap) as [LayerId, string[]][]) {
