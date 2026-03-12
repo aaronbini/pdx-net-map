@@ -324,6 +324,7 @@ export function Map({ visibleLayers, channelFilter, districtFilter }: Props) {
         layout: {
           visibility: netVis,
           'text-field': ['get', 'NET_Team_Name'],
+          'text-font': ['Noto Sans Regular'],
           'text-size': 11,
           'text-anchor': 'center',
         },
@@ -356,6 +357,7 @@ export function Map({ visibleLayers, channelFilter, districtFilter }: Props) {
         layout: {
           visibility: nVis,
           'text-field': ['get', 'MAPLABEL'],
+          'text-font': ['Noto Sans Regular'],
           'text-size': 10,
         },
         paint: {
@@ -400,6 +402,7 @@ export function Map({ visibleLayers, channelFilter, districtFilter }: Props) {
         layout: {
           visibility: vis,
           'text-field': ['get', 'Radio_Training_Sector'],
+          'text-font': ['Noto Sans Regular'],
           'text-size': 11,
           'text-anchor': 'center',
         },

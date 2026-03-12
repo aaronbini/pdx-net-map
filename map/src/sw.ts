@@ -4,7 +4,6 @@ import { registerRoute } from 'workbox-routing'
 import { CacheFirst, NetworkFirst } from 'workbox-strategies'
 import { CacheableResponsePlugin } from 'workbox-cacheable-response'
 import { ExpirationPlugin } from 'workbox-expiration'
-import { RangeRequestsPlugin } from 'workbox-range-requests'
 
 declare const self: ServiceWorkerGlobalScope
 
@@ -35,19 +34,6 @@ registerRoute(
   })
 )
 
-// PMTiles range requests (status 206 = Partial Content)
-registerRoute(
-  ({ url }) => url.pathname.endsWith('.pmtiles'),
-  new CacheFirst({
-    cacheName: 'pmtiles',
-    plugins: [
-      new RangeRequestsPlugin(),
-      new CacheableResponsePlugin({ statuses: [0, 200, 206] }),
-      new ExpirationPlugin({ maxEntries: 5, maxAgeSeconds: 60 * 60 * 24 * 90 }),
-    ],
-  })
-)
-
 // ArcGIS GeoJSON data (network-first, fall back to cache when offline)
 registerRoute(
   ({ url }) => url.hostname.includes('arcgis.com'),
@@ -60,6 +46,10 @@ registerRoute(
     ],
   })
 )
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim())
+})
 
 self.addEventListener('message', (event) => {
   if ((event.data as { type?: string } | null)?.type === 'SKIP_WAITING') void self.skipWaiting()
