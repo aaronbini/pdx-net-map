@@ -1,7 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import mapboxgl from 'mapbox-gl'
-import 'mapbox-gl/dist/mapbox-gl.css'
+import maplibregl from 'maplibre-gl'
+import 'maplibre-gl/dist/maplibre-gl.css'
+import { Protocol } from 'pmtiles'
+import { layers as protomapsLayers, LIGHT } from '@protomaps/basemaps'
 import type { LayerId } from '../types'
+
+// Register pmtiles:// protocol once at module load
+const _pmtilesProtocol = new Protocol()
+maplibregl.addProtocol('pmtiles', _pmtilesProtocol.tile.bind(_pmtilesProtocol))
 import { getLayerConfig } from '../constants/layers'
 import { loadMapIcons } from '../utils/mapIcons'
 import { LAYER_ICONS } from '../constants/icons'
@@ -12,7 +18,6 @@ import {
   useCeiTanks, /*useUnsafeBuildings,*/ useCommunityGardens, useRadioSectors,
 } from '../hooks/useArcGIS'
 
-mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
 
 interface Props {
   visibleLayers: Set<LayerId>
@@ -164,8 +169,8 @@ type SourceSpec = { id: string; data: GeoJSON.FeatureCollection }
 
 export function Map({ visibleLayers, channelFilter, districtFilter }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const mapRef = useRef<mapboxgl.Map | null>(null)
-  const popupRef = useRef<mapboxgl.Popup | null>(null)
+  const mapRef = useRef<maplibregl.Map | null>(null)
+  const popupRef = useRef<maplibregl.Popup | null>(null)
   const visibleLayersRef = useRef(visibleLayers)
   const [mapLoaded, setMapLoaded] = useState(false)
 
@@ -191,16 +196,30 @@ export function Map({ visibleLayers, channelFilter, districtFilter }: Props) {
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
 
-    const map = new mapboxgl.Map({
+    const tilesUrl = `${location.origin}${import.meta.env.BASE_URL}portland.pmtiles`
+    const map = new maplibregl.Map({
       container: containerRef.current,
-      style: 'mapbox://styles/mapbox/light-v11',
+      style: {
+        version: 8,
+        glyphs: 'https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf',
+        sprite: 'https://protomaps.github.io/basemaps-assets/sprites/v4/light',
+        sources: {
+          protomaps: {
+            type: 'vector',
+            url: `pmtiles://${tilesUrl}`,
+            attribution: '<a href="https://protomaps.com">Protomaps</a> © <a href="https://openstreetmap.org">OpenStreetMap</a>',
+          },
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        layers: protomapsLayers('protomaps', LIGHT, { lang: 'en' }) as any,
+      },
       center: [-122.65, 45.52],
       zoom: 11,
       minZoom: 7,
     })
 
-    map.addControl(new mapboxgl.NavigationControl(), 'bottom-right')
-    map.addControl(new mapboxgl.ScaleControl(), 'bottom-left')
+    map.addControl(new maplibregl.NavigationControl(), 'bottom-right')
+    map.addControl(new maplibregl.ScaleControl(), 'bottom-left')
 
     map.on('load', async () => {
       const iconDefs = Object.fromEntries(
@@ -244,7 +263,7 @@ export function Map({ visibleLayers, channelFilter, districtFilter }: Props) {
     ].filter(s => s.data != null)
 
     for (const { id, data } of sources) {
-      const existing = map.getSource(id) as mapboxgl.GeoJSONSource | undefined
+      const existing = map.getSource(id) as maplibregl.GeoJSONSource | undefined
       if (existing) {
         existing.setData(data)
       } else {
@@ -259,7 +278,7 @@ export function Map({ visibleLayers, channelFilter, districtFilter }: Props) {
       const netColor: any = [
         'case',
         ['!=', ['get', 'Jurisdiction'], 'Portland'], '#a78bfa',
-        ['==', ['get', 'Inactive'], 'Inactive'],      '#94a3b8',
+        ['==', ['get', 'Inactive'], 'Inactive'],      '#64748b',
         '#3b82f6',
       ]
 
@@ -273,7 +292,8 @@ export function Map({ visibleLayers, channelFilter, districtFilter }: Props) {
           'fill-color': netColor,
           'fill-opacity': [
             'case',
-            ['!=', ['get', 'Jurisdiction'], 'Portland'], 0.09,
+            ['!=', ['get', 'Jurisdiction'], 'Portland'], 0.15,
+            ['==', ['get', 'Inactive'], 'Inactive'], 0.35,
             0.25,
           ],
         },
@@ -431,7 +451,7 @@ export function Map({ visibleLayers, channelFilter, districtFilter }: Props) {
     }
 
     // Single global click handler — point layers take priority over polygon layers
-    if (!map['_pdxClickHandlerAdded' as keyof mapboxgl.Map]) {
+    if (!map['_pdxClickHandlerAdded' as keyof maplibregl.Map]) {
       (map as unknown as Record<string, unknown>)['_pdxClickHandlerAdded'] = true
 
       const pointLayerIds = pointLayers.map(l => l.layerId)
@@ -444,7 +464,7 @@ export function Map({ visibleLayers, channelFilter, districtFilter }: Props) {
           const coords = (feature.geometry as GeoJSON.Point).coordinates as [number, number]
           const props = feature.properties as Record<string, unknown>
           popupRef.current?.remove()
-          popupRef.current = new mapboxgl.Popup({ maxWidth: '280px' })
+          popupRef.current = new maplibregl.Popup({ maxWidth: '280px' })
             .setLngLat(coords)
             .setHTML(buildPopup(feature.layer?.id ?? '', props))
             .addTo(map)
@@ -459,7 +479,7 @@ export function Map({ visibleLayers, channelFilter, districtFilter }: Props) {
           if (features.length > 0) {
             const props = features[0].properties as Record<string, unknown>
             popupRef.current?.remove()
-            popupRef.current = new mapboxgl.Popup({ maxWidth: '300px' })
+            popupRef.current = new maplibregl.Popup({ maxWidth: '300px' })
               .setLngLat(e.lngLat)
               .setHTML(buildPopup(layerId, props))
               .addTo(map)

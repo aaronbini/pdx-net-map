@@ -1,4 +1,4 @@
-import type { Map as MapboxMap } from 'mapbox-gl'
+import type { Map as MaplibreMap } from 'maplibre-gl'
 
 const LOGICAL_SIZE = 22  // display size in logical (CSS) pixels
 const PIXEL_RATIO = 2    // render 2× for retina sharpness
@@ -38,7 +38,7 @@ function svgToImageData(svgString: string): Promise<ImageData> {
 }
 
 export async function loadMapIcons(
-  map: MapboxMap,
+  map: MaplibreMap,
   icons: Record<string, { svg: string; color: string }>
 ): Promise<void> {
   const px = LOGICAL_SIZE * PIXEL_RATIO
