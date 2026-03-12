@@ -13,6 +13,7 @@ export default function App() {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return
     if (navigator.serviceWorker.controller) setOfflineReady(true)
+    navigator.serviceWorker.addEventListener('controllerchange', () => setOfflineReady(true))
     navigator.serviceWorker.addEventListener('message', (e) => {
       if ((e.data as { type?: string } | null)?.type === 'OFFLINE_READY') setOfflineReady(true)
     })

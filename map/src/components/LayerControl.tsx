@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import type { LayerId } from '../types'
 import { LAYER_CONFIGS, LAYER_GROUPS } from '../constants/layers'
 import { LAYER_ICONS } from '../constants/icons'
@@ -82,6 +82,8 @@ export function LayerControl({ visibleLayers, onToggle, channelFilter, onChannel
   const loading = useLoadingStates()
   const errors = useErrorStates()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [dragY, setDragY] = useState(0)
+  const dragStartY = useRef<number | null>(null)
 
   const panelContent = (
     <>
@@ -170,15 +172,17 @@ export function LayerControl({ visibleLayers, onToggle, channelFilter, onChannel
                     {isNet && isVisible && (
                       <div style={{ marginLeft: 20, marginTop: 4 }}>
                         {/* Status legend */}
-                        {NET_LEGEND.map(({ color, label }) => (
-                          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '2px 0', fontSize: 11, color: '#64748b' }}>
-                            <span style={{
-                              display: 'inline-block', width: 10, height: 10,
-                              borderRadius: 2, background: color, opacity: 0.8, flexShrink: 0,
-                            }} />
-                            {label}
-                          </div>
-                        ))}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 10px', marginBottom: 4 }}>
+                          {NET_LEGEND.map(({ color, label }) => (
+                            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#64748b' }}>
+                              <span style={{
+                                display: 'inline-block', width: 10, height: 10,
+                                borderRadius: 2, background: color, opacity: 0.8, flexShrink: 0,
+                              }} />
+                              {label}
+                            </div>
+                          ))}
+                        </div>
 
                         {/* District filter */}
                         <div style={{ marginTop: 8 }}>
@@ -362,6 +366,17 @@ export function LayerControl({ visibleLayers, onToggle, channelFilter, onChannel
 
       <aside
         className="layer-control-drawer"
+        onTouchStart={e => { dragStartY.current = e.touches[0].clientY }}
+        onTouchMove={e => {
+          if (dragStartY.current === null) return
+          const dy = e.touches[0].clientY - dragStartY.current
+          if (dy > 0) setDragY(dy)
+        }}
+        onTouchEnd={() => {
+          if (dragY > 80) setMobileOpen(false)
+          setDragY(0)
+          dragStartY.current = null
+        }}
         style={{
           display: 'none', // shown via CSS on mobile
           ...panelStyles,
@@ -371,11 +386,11 @@ export function LayerControl({ visibleLayers, onToggle, channelFilter, onChannel
           right: 0,
           width: '100%',
           borderRadius: '16px 16px 0 0',
-          maxHeight: '70vh',
+          maxHeight: '45vh',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
           zIndex: 19,
-          transform: mobileOpen ? 'translateY(0)' : 'translateY(100%)',
-          transition: 'transform 0.25s ease',
+          transform: mobileOpen ? `translateY(${dragY}px)` : 'translateY(100%)',
+          transition: dragY > 0 ? 'none' : 'transform 0.25s ease',
         }}
       >
         {panelContent}
