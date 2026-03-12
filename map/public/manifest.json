@@ -1,0 +1,17 @@
+{
+  "name": "Portland NET Map",
+  "short_name": "NET Map",
+  "description": "Portland Neighborhood Emergency Team interactive map",
+  "start_url": "/pdx-net-map/",
+  "scope": "/pdx-net-map/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "any",
+  "icons": [
+    { "src": "/pdx-net-map/icons/pwa-64x64.png",   "sizes": "64x64",   "type": "image/png" },
+    { "src": "/pdx-net-map/icons/pwa-192x192.png",  "sizes": "192x192", "type": "image/png" },
+    { "src": "/pdx-net-map/icons/pwa-512x512.png",  "sizes": "512x512", "type": "image/png" },
+    { "src": "/pdx-net-map/icons/maskable-icon-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

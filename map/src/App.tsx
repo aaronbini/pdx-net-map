@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Map } from './components/Map'
 import { LayerControl } from './components/LayerControl'
 import { DEFAULT_VISIBLE } from './constants/layers'
@@ -8,6 +8,15 @@ export default function App() {
   const [visibleLayers, setVisibleLayers] = useState<Set<LayerId>>(DEFAULT_VISIBLE)
   const [channelFilter, setChannelFilter] = useState<number | null>(null)
   const [districtFilter, setDistrictFilter] = useState<number | null>(null)
+  const [offlineReady, setOfflineReady] = useState(false)
+
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return
+    if (navigator.serviceWorker.controller) setOfflineReady(true)
+    navigator.serviceWorker.addEventListener('message', (e) => {
+      if ((e.data as { type?: string } | null)?.type === 'OFFLINE_READY') setOfflineReady(true)
+    })
+  }, [])
 
   const handleToggle = useCallback((id: LayerId) => {
     setVisibleLayers(prev => {
@@ -36,6 +45,7 @@ export default function App() {
         onChannelFilter={handleChannelFilter}
         districtFilter={districtFilter}
         onDistrictFilter={handleDistrictFilter}
+        offlineReady={offlineReady}
       />
     </div>
   )

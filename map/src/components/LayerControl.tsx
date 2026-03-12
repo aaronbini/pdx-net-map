@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { LayerId } from '../types'
 import { LAYER_CONFIGS, LAYER_GROUPS } from '../constants/layers'
 import { LAYER_ICONS } from '../constants/icons'
@@ -25,7 +26,7 @@ const CHANNELS = [2, 3, 4, 5, 6, 7, 15, 16, 17, 18, 20, 22]
 
 const NET_LEGEND = [
   { color: '#3b82f6', label: 'Active' },
-  { color: '#94a3b8', label: 'Inactive' },
+  { color: '#64748b', label: 'Inactive' },
   { color: '#a78bfa', label: 'Outside Portland' },
 ]
 
@@ -36,6 +37,7 @@ interface Props {
   onChannelFilter: (ch: number | null) => void
   districtFilter: number | null
   onDistrictFilter: (d: number | null) => void
+  offlineReady: boolean
 }
 
 function useLoadingStates(): Record<LayerId, boolean> {
@@ -76,25 +78,13 @@ function useErrorStates(): Record<LayerId, boolean> {
   }
 }
 
-export function LayerControl({ visibleLayers, onToggle, channelFilter, onChannelFilter, districtFilter, onDistrictFilter }: Props) {
+export function LayerControl({ visibleLayers, onToggle, channelFilter, onChannelFilter, districtFilter, onDistrictFilter, offlineReady }: Props) {
   const loading = useLoadingStates()
   const errors = useErrorStates()
+  const [mobileOpen, setMobileOpen] = useState(false)
 
-  return (
-    <aside style={{
-      position: 'absolute',
-      top: 12,
-      left: 12,
-      zIndex: 10,
-      background: '#fff',
-      borderRadius: 8,
-      boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
-      width: 224,
-      maxHeight: 'calc(100vh - 40px)',
-      overflowY: 'auto',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
-      fontSize: 13,
-    }}>
+  const panelContent = (
+    <>
       {/* Header */}
       <div style={{
         padding: '12px 16px 10px',
@@ -301,6 +291,103 @@ export function LayerControl({ visibleLayers, onToggle, channelFilter, onChannel
           Data: Portland Bureau of Emergency Management
         </div>
       </div>
-    </aside>
+
+      {/* Offline status */}
+      <div style={{
+        padding: '6px 16px 10px',
+        borderTop: '1px solid #e2e8f0',
+        fontSize: 11,
+        color: offlineReady ? '#22c55e' : '#94a3b8',
+        display: 'flex', alignItems: 'center', gap: 5,
+      }}>
+        <span style={{ fontSize: 8 }}>{offlineReady ? '●' : '○'}</span>
+        {offlineReady ? 'Offline ready' : 'Caching for offline…'}
+      </div>
+    </>
+  )
+
+  const panelStyles: React.CSSProperties = {
+    background: '#fff',
+    borderRadius: 8,
+    boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+    width: 224,
+    maxHeight: 'calc(100vh - 40px)',
+    overflowY: 'auto',
+    fontFamily: 'system-ui, -apple-system, sans-serif',
+    fontSize: 13,
+  }
+
+  return (
+    <>
+      {/* Desktop sidebar */}
+      <aside style={{
+        ...panelStyles,
+        position: 'absolute',
+        top: 12,
+        left: 12,
+        zIndex: 10,
+        // Hide on small screens
+        display: 'var(--layer-control-desktop-display, block)' as React.CSSProperties['display'],
+      }}
+        className="layer-control-desktop"
+      >
+        {panelContent}
+      </aside>
+
+      {/* Mobile: floating button + bottom drawer */}
+      <button
+        className="layer-control-fab"
+        onClick={() => setMobileOpen(o => !o)}
+        aria-label={mobileOpen ? 'Close layers' : 'Open layers'}
+        style={{
+          display: 'none', // shown via CSS on mobile
+          position: 'fixed',
+          bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))',
+          left: '1rem',
+          zIndex: 20,
+          background: '#3b82f6',
+          color: '#fff',
+          borderRadius: '50%',
+          width: 48, height: 48,
+          border: 'none',
+          fontSize: 20,
+          cursor: 'pointer',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {mobileOpen ? '✕' : '☰'}
+      </button>
+
+      <aside
+        className="layer-control-drawer"
+        style={{
+          display: 'none', // shown via CSS on mobile
+          ...panelStyles,
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          width: '100%',
+          borderRadius: '16px 16px 0 0',
+          maxHeight: '70vh',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          zIndex: 19,
+          transform: mobileOpen ? 'translateY(0)' : 'translateY(100%)',
+          transition: 'transform 0.25s ease',
+        }}
+      >
+        {panelContent}
+      </aside>
+
+      <style>{`
+        @media (max-width: 639px) {
+          .layer-control-desktop { display: none !important; }
+          .layer-control-fab { display: flex !important; }
+          .layer-control-drawer { display: block !important; }
+        }
+      `}</style>
+    </>
   )
 }
