@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import type { LayerId } from '../types'
 import { LAYER_CONFIGS, LAYER_GROUPS } from '../constants/layers'
 import { LAYER_ICONS } from '../constants/icons'
@@ -82,8 +82,6 @@ export function LayerControl({ visibleLayers, onToggle, channelFilter, onChannel
   const loading = useLoadingStates()
   const errors = useErrorStates()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [dragY, setDragY] = useState(0)
-  const dragStartY = useRef<number | null>(null)
 
   const panelContent = (
     <>
@@ -96,10 +94,20 @@ export function LayerControl({ visibleLayers, onToggle, channelFilter, onChannel
         gap: 10,
       }}>
         <img src={LOGO_URL} alt="Portland NET" style={{ width: 36, height: 36, objectFit: 'contain', flexShrink: 0 }} />
-        <div>
+        <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 700, fontSize: 13, color: '#0f172a', lineHeight: 1.2 }}>Portland NET Map</div>
           <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>Neighborhood Emergency Teams</div>
         </div>
+        <button
+          className="layer-control-close"
+          onClick={() => setMobileOpen(false)}
+          aria-label="Close"
+          style={{
+            display: 'none', // shown via CSS on mobile
+            background: 'none', border: 'none', cursor: 'pointer',
+            fontSize: 18, color: '#94a3b8', padding: '4px 4px', lineHeight: 1, flexShrink: 0,
+          }}
+        >✕</button>
       </div>
 
       {/* Layer toggles hint */}
@@ -340,13 +348,13 @@ export function LayerControl({ visibleLayers, onToggle, channelFilter, onChannel
 
       {/* Mobile: floating button + bottom drawer */}
       <button
-        className="layer-control-fab"
+        className={`layer-control-fab${mobileOpen ? ' layer-control-fab-hidden' : ''}`}
         onClick={() => setMobileOpen(o => !o)}
-        aria-label={mobileOpen ? 'Close layers' : 'Open layers'}
+        aria-label="Open layers"
         style={{
-          display: 'none', // shown via CSS on mobile
+          display: 'none', // shown via CSS on mobile when closed
           position: 'fixed',
-          bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))',
+          bottom: 'calc(3rem + env(safe-area-inset-bottom, 0px))',
           left: '1rem',
           zIndex: 20,
           background: '#3b82f6',
@@ -361,22 +369,11 @@ export function LayerControl({ visibleLayers, onToggle, channelFilter, onChannel
           justifyContent: 'center',
         }}
       >
-        {mobileOpen ? '✕' : '☰'}
+        ☰
       </button>
 
       <aside
         className="layer-control-drawer"
-        onTouchStart={e => { dragStartY.current = e.touches[0].clientY }}
-        onTouchMove={e => {
-          if (dragStartY.current === null) return
-          const dy = e.touches[0].clientY - dragStartY.current
-          if (dy > 0) setDragY(dy)
-        }}
-        onTouchEnd={() => {
-          if (dragY > 80) setMobileOpen(false)
-          setDragY(0)
-          dragStartY.current = null
-        }}
         style={{
           display: 'none', // shown via CSS on mobile
           ...panelStyles,
@@ -389,8 +386,8 @@ export function LayerControl({ visibleLayers, onToggle, channelFilter, onChannel
           maxHeight: '45vh',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
           zIndex: 19,
-          transform: mobileOpen ? `translateY(${dragY}px)` : 'translateY(100%)',
-          transition: dragY > 0 ? 'none' : 'transform 0.25s ease',
+          transform: mobileOpen ? 'translateY(0)' : 'translateY(100%)',
+          transition: 'transform 0.25s ease',
         }}
       >
         {panelContent}
@@ -400,7 +397,9 @@ export function LayerControl({ visibleLayers, onToggle, channelFilter, onChannel
         @media (max-width: 639px) {
           .layer-control-desktop { display: none !important; }
           .layer-control-fab { display: flex !important; }
+          .layer-control-fab-hidden { display: none !important; }
           .layer-control-drawer { display: block !important; }
+          .layer-control-close { display: block !important; }
         }
       `}</style>
     </>
