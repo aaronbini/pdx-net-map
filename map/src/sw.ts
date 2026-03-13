@@ -47,10 +47,16 @@ registerRoute(
   })
 )
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim())
+// Skip the "waiting" phase and activate immediately when a new SW is installed.
+// Without this, a new SW would sit idle until every open tab is closed — meaning
+// users would never see updates unless they manually closed and reopened the app.
+self.addEventListener('install', () => {
+  void self.skipWaiting()
 })
 
-self.addEventListener('message', (event) => {
-  if ((event.data as { type?: string } | null)?.type === 'SKIP_WAITING') void self.skipWaiting()
+// After activating, claim all open tabs immediately so they're controlled by the
+// new SW right away. This triggers a 'controllerchange' event in App.tsx, which
+// reloads the page so users get the new version of the app.
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim())
 })

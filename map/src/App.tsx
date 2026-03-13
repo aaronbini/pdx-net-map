@@ -35,6 +35,19 @@ export default function App() {
     navigator.serviceWorker.addEventListener('message', (e) => {
       if ((e.data as { type?: string } | null)?.type === 'OFFLINE_READY') setOfflineReady(true)
     })
+
+    // Standalone PWAs on Android often resume from the background rather than doing
+    // a full page load, so the browser never automatically checks for a new SW.
+    // Explicitly calling registration.update() on visibility change ensures the app
+    // notices deployments the next time the user switches back to it.
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        const reg = await navigator.serviceWorker.getRegistration()
+        reg?.update()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [])
 
   const handleToggle = useCallback((id: LayerId) => {
