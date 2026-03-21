@@ -33,7 +33,7 @@ The app pulls live data from the PBEM ArcGIS REST API and displays it with:
 
 ## Offline support
 
-The app installs as a PWA. On first load it caches the app shell, the basemap pmtiles file, and the ArcGIS layer data. Subsequent visits work fully offline, with ArcGIS data served from cache when the network is unavailable. A new service worker activates automatically on deploy and reloads the page to deliver the latest version.
+The app installs as a Progressive Web App (PWA). On first load it caches the app shell, the basemap pmtiles file, and the ArcGIS layer data. Subsequent visits work fully offline, with ArcGIS data served from cache when the network is unavailable. A new service worker activates automatically on deploy and reloads the page to deliver the latest version.
 
 ## Setup
 
